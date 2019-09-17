@@ -3,12 +3,18 @@ import numpy as np
 import pandas as pd
 
 def demand(number):
-    if (number<=0.25):
-        return randrange(1,26)
-    elif (number<=0.75):
-        return randrange(26,76)
-    elif (number<=1.0):
-        return randrange(76,101)
+    if (number<=0.05):
+        return 2
+    elif (number<=0.20):
+        return 3
+    elif (number<=0.40):
+        return 4
+    elif (number<=0.70):
+        return 5
+    elif (number<=0.90):
+        return 6
+    elif (number<=1.00):
+        return 7
 
 def leadtime(number):
     if (number<=0.25):
@@ -105,15 +111,15 @@ s_besar=1000
 shortage_cost_per_unit=2
 inventory_cost_per_unit=1
 lot_order_cost=15
-price_per_unit=20
+price_per_unit=15
 profit_mean=0
 iteration = 5
 
 df2 = pd.DataFrame(columns=['s_kecil', 's_besar', 'profit_avg'])
 
 
-s_kecil_range=range(10,100+1,10)
-s_besar_range=range(100,2000+1,100)
+s_kecil_range=range(10,200+1)
+s_besar_range=range(100,2000+1)
 
 #xx=0
 
@@ -128,7 +134,7 @@ for d in s_kecil_range:
         #writer.save()
 
         df2=df2.append({'s_kecil':d,'s_besar':e,'profit_avg':profit_mean},ignore_index=True)
-        print("s_kecil = "+str(d)+" s_besar = "+str(e)+" profit= "+str(profit_mean / iteration))
+        #print("s_kecil = "+str(d)+" s_besar = "+str(e)+" profit= "+str(profit_mean / iteration))
 
 
 posisi_profit_terbesar=df2['profit_avg'].idxmax()
