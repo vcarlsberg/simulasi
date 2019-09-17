@@ -108,6 +108,7 @@ def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_uni
 
     return df
 
+#CONFIGURABLE PARAMETERS#
 init_stock = 50
 period_cummulative = 30
 s_kecil=750
@@ -117,16 +118,20 @@ inventory_cost_per_unit=1
 lot_order_cost=15
 price_per_unit=15
 purchasing_cost_per_unit=5
-profit_mean=0
 iteration = 5
+s_kecil_range_min=10
+s_kecil_range_max=200
+s_besar_range_min=10
+s_besar_range_max=200
+#END OF CONFIGURABLE PARAMETERS#
 
-df2 = pd.DataFrame(columns=['s_kecil', 's_besar', 'profit_avg'])
-
-
-s_kecil_range=range(10,200+1,10)
-s_besar_range=range(10,200+1,10)
+s_kecil_range=range(s_kecil_range_min,s_kecil_range_max+1,10)
+s_besar_range=range(s_besar_range_min,s_besar_range_max+1,10)
 
 #xx=0
+
+df2 = pd.DataFrame(columns=['s_kecil', 's_besar', 'profit_avg'])
+profit_mean=0
 
 for d in s_kecil_range:
     for e in s_besar_range:
