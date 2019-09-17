@@ -158,4 +158,4 @@ writer.save()
 
 
 print(param_terbesar)
-print("amwuh")
+print("End of Process")
