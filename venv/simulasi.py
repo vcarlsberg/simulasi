@@ -24,13 +24,14 @@ def leadtime(number):
     elif (number<=1.0):
         return 5
 
-def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_unit,inventory_cost_per_unit,lot_order_cost,price_per_unit) :
+def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_unit,inventory_cost_per_unit,lot_order_cost,price_per_unit,purchasing_cost_per_unit) :
     on_lead_time=False
 
     stock_EOD=[0] * (period_cummulative+10)
     shortage_cost_EOD=[0] * (period_cummulative+10)
     inventory_cost_EOD=[0] * (period_cummulative+10)
     lot_order_cost_EOD=[0] * (period_cummulative+10)
+    purchasing_cost_EOD=[0] * (period_cummulative+10)
     cummulative_cost_EOD=[0] * (period_cummulative+10)
     revenue_EOD=[0] * (period_cummulative+10)
     profit_EOD=[0] * (period_cummulative+10)
@@ -67,7 +68,8 @@ def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_uni
                     random_no_lead[x]=leadtime_random
                     waktu_leadtime=leadtime(leadtime_random)
                     lead_time_EOD[x]=waktu_leadtime
-                    stock_EOD[x+waktu_leadtime]=s_kecil-stock_EOD[x]+s_besar
+                    stock_EOD[x+waktu_leadtime]=(s_kecil-stock_EOD[x])+(s_besar-s_kecil)
+                    purchasing_cost_EOD[x]=purchasing_cost_per_unit*(s_kecil-stock_EOD[x])+(s_besar-s_kecil)
                     replenished_EOD[x+waktu_leadtime]=stock_EOD[x+waktu_leadtime]
                     lot_order_cost_EOD[x] = lot_order_cost
                     on_lead_time=True
@@ -76,7 +78,8 @@ def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_uni
                     random_no_lead[x] = leadtime_random
                     waktu_leadtime = leadtime(leadtime_random)
                     lead_time_EOD[x] = waktu_leadtime
-                    stock_EOD[x+waktu_leadtime]=(stock_EOD[x]*-1)+s_besar
+                    stock_EOD[x+waktu_leadtime]=((stock_EOD[x]*-1)+s_kecil)+(s_besar-s_kecil)
+                    purchasing_cost_EOD[x] = purchasing_cost_per_unit * (s_kecil - stock_EOD[x]) + (s_besar - s_kecil)
                     replenished_EOD[x + waktu_leadtime] = stock_EOD[x + waktu_leadtime]
                     lot_order_cost_EOD[x] = lot_order_cost
                     on_lead_time = True
@@ -87,18 +90,19 @@ def simulasi(init_stock,period_cummulative,s_kecil,s_besar,shortage_cost_per_uni
             if(stock_EOD[x]>0):
                 inventory_cost_EOD[x]=inventory_cost_per_unit*stock_EOD[x]
 
-        profit_EOD[x]=revenue_EOD[x]-shortage_cost_EOD[x]-inventory_cost_EOD[x]-lot_order_cost_EOD[x]
+        profit_EOD[x]=revenue_EOD[x]-shortage_cost_EOD[x]-inventory_cost_EOD[x]-lot_order_cost_EOD[x]-purchasing_cost_EOD[x]
 
     df = pd.DataFrame({'Demand': demand_EOD[0:31],
                        'Demand Rand No':random_no_demand[0:31],
-                       'Stock':stock_EOD[0:31],
                        'Lead Time':lead_time_EOD[0:31],
                        'Leadtime Rand No': random_no_lead[0:31],
+                       'Stock': stock_EOD[0:31],
                        'Replenished':replenished_EOD[0:31],
                        'Revenue':revenue_EOD[0:31],
                        'Shortage Cost':shortage_cost_EOD[0:31],
                        'Inventory Cost':inventory_cost_EOD[0:31],
                        'Lot Order Cost':lot_order_cost_EOD[0:31],
+                       'Purchasing Cost':purchasing_cost_EOD[0:31],
                        'Profit':profit_EOD[0:31]
                        })
 
@@ -112,14 +116,15 @@ shortage_cost_per_unit=2
 inventory_cost_per_unit=1
 lot_order_cost=15
 price_per_unit=15
+purchasing_cost_per_unit=5
 profit_mean=0
 iteration = 5
 
 df2 = pd.DataFrame(columns=['s_kecil', 's_besar', 'profit_avg'])
 
 
-s_kecil_range=range(10,200+1)
-s_besar_range=range(100,2000+1)
+s_kecil_range=range(10,200+1,10)
+s_besar_range=range(10,200+1,10)
 
 #xx=0
 
@@ -127,14 +132,14 @@ for d in s_kecil_range:
     for e in s_besar_range:
         for x in range(1,iteration+1):
             profit = simulasi(init_stock, period_cummulative, d, e, shortage_cost_per_unit, inventory_cost_per_unit,
-                              lot_order_cost, price_per_unit)
+                              lot_order_cost, price_per_unit, purchasing_cost_per_unit)
         #    profit.to_excel(writer, sheet_name='Sheet'+str(x))
             profit_mean=profit_mean+profit["Profit"].mean()
 
         #writer.save()
 
         df2=df2.append({'s_kecil':d,'s_besar':e,'profit_avg':profit_mean},ignore_index=True)
-        #print("s_kecil = "+str(d)+" s_besar = "+str(e)+" profit= "+str(profit_mean / iteration))
+        print("s_kecil = "+str(d)+" s_besar = "+str(e)+" profit= "+str(profit_mean / iteration))
 
 
 posisi_profit_terbesar=df2['profit_avg'].idxmax()
@@ -142,10 +147,11 @@ param_terbesar=df2.iloc[posisi_profit_terbesar,:]
 
 writer = pd.ExcelWriter('pandas_simple.xlsx', engine='xlsxwriter')
 
-for x in range(iteration+1):
+for x in range(iteration):
+    x=x+1
     profit = simulasi(init_stock, period_cummulative, param_terbesar["s_kecil"], param_terbesar["s_besar"],
                       shortage_cost_per_unit, inventory_cost_per_unit,
-                      lot_order_cost, price_per_unit)
+                      lot_order_cost, price_per_unit,purchasing_cost_per_unit)
     profit.to_excel(writer, sheet_name='Sheet'+str(x))
 writer.save()
 
